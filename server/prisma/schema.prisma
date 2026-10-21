@@ -1,0 +1,537 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "sqlite"
+  url = env("DATABASE_URL")
+}
+
+
+
+
+
+model Role {
+  id String @id @default(cuid())
+  name String @unique
+  users User[]
+}
+model User {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  email String @unique
+ 
+  passwordHash String
+ 
+  name String
+ 
+  roleId String
+  role Role @relation(fields:[roleId],references:[id])
+ 
+  departmentId String?
+ 
+  department Department? @relation("DepartmentMembers", fields: [departmentId], references: [id])
+  headsDepartment Department[] @relation("DepartmentHead")
+ 
+  designation String?
+ 
+  phone String?
+ 
+  avatarUrl String?
+ 
+  skills String @default("[]")
+ 
+  notificationPreferences String @default("{}")
+ 
+  approved Boolean @default(true)
+ 
+  deletedAt DateTime?
+ 
+  createdAt DateTime @default(now())
+ 
+  bookings Booking[]
+ 
+  ownedProjects Project[]
+ 
+  projectMemberships ProjectMember[]
+ 
+  tasks Task[]
+ 
+  eventRegistrations EventRegistration[]
+ 
+  comments Comment[]
+ 
+  notifications Notification[]
+ 
+  approvals ApprovalStep[]
+ 
+  auditLogs AuditLog[]
+  attachments Attachment[]
+  @@index([departmentId,roleId])
+}
+model Department {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  name String
+ 
+  shortCode String @unique
+ 
+  description String @default("")
+ 
+  contactEmail String?
+ 
+  headId String?
+ 
+  head User? @relation("DepartmentHead", fields:[headId],references:[id])
+ 
+  users User[] @relation("DepartmentMembers")
+  announcements Announcement[] @relation("DeptAnnouncements")
+ 
+  resources Resource[]
+ 
+  projects Project[]
+ 
+  events Event[]
+ 
+ 
+  collaborationsFrom CollaborationRequest[] @relation("fromDepartment")
+ 
+  collaborationsTo CollaborationRequest[] @relation("toDepartment")
+ 
+  createdAt DateTime @default(now())
+}
+model ResourceCategory {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  name String @unique
+ 
+  resources Resource[]
+}
+model Resource {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  name String
+ 
+  categoryId String
+ 
+  category ResourceCategory @relation(fields:[categoryId],references:[id])
+ 
+  departmentId String
+ 
+  department Department @relation(fields:[departmentId],references:[id])
+ 
+  description String @default("")
+ 
+  location String
+ 
+  capacity Int @default(1)
+ 
+  specifications String @default("{}")
+ 
+  imageUrl String?
+ 
+  status String @default("AVAILABLE")
+ 
+  sharingPolicy String @default("APPROVAL_NEEDED")
+ 
+  workingHours String @default("{}")
+ 
+  blackoutDates String @default("[]")
+ 
+  approvalSteps Int @default(2)
+ 
+  deletedAt DateTime?
+ 
+  bookings Booking[]
+ 
+  availabilityRules AvailabilityRule[]
+ 
+  maintenanceLogs MaintenanceLog[]
+ 
+  createdAt DateTime @default(now())
+  @@index([departmentId,categoryId,status])
+}
+model AvailabilityRule {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  resourceId String
+ 
+  resource Resource @relation(fields:[resourceId],references:[id],onDelete:Cascade)
+ 
+  weekday Int
+ 
+  startTime String
+ 
+  endTime String
+}
+model Booking {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  resourceId String
+ 
+  resource Resource @relation(fields:[resourceId],references:[id])
+ 
+  requesterId String
+ 
+  requester User @relation(fields:[requesterId],references:[id])
+ 
+  projectId String?
+ 
+  project Project? @relation(fields:[projectId],references:[id])
+ 
+  eventId String?
+ 
+  event Event? @relation(fields:[eventId],references:[id])
+ 
+  title String
+ 
+  purpose String
+ 
+  startAt DateTime
+ 
+  endAt DateTime
+ 
+  attendees Int @default(1)
+ 
+  status String @default("PENDING")
+ 
+  recurringRule String?
+ 
+  expiresAt DateTime?
+ 
+  attachments String @default("[]")
+ 
+  createdAt DateTime @default(now())
+ 
+  updatedAt DateTime @updatedAt
+ 
+  approvals ApprovalStep[]
+  attachmentRecords Attachment[]
+  @@index([resourceId,startAt,endAt,status])
+  @@index([requesterId,status])
+}
+model ApprovalStep {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  bookingId String
+ 
+  booking Booking @relation(fields:[bookingId],references:[id],onDelete:Cascade)
+ 
+  approverId String
+ 
+  approver User @relation(fields:[approverId],references:[id])
+ 
+  stepOrder Int
+ 
+  status String @default("PENDING")
+ 
+  comment String?
+ 
+  actedAt DateTime?
+  @@unique([bookingId,stepOrder])
+}
+model Project {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  title String
+ 
+  description String @default("")
+ 
+  ownerId String
+ 
+  owner User @relation(fields:[ownerId],references:[id])
+ 
+  departmentId String
+ 
+  department Department @relation(fields:[departmentId],references:[id])
+ 
+  startAt DateTime
+ 
+  endAt DateTime
+ 
+  budget Float @default(0)
+ 
+  status String @default("PLANNING")
+ 
+  priority String @default("NORMAL")
+ 
+  collaboratingDepartments String @default("[]")
+ 
+  bookings Booking[]
+ 
+  members ProjectMember[]
+ 
+  milestones Milestone[]
+ 
+  tasks Task[]
+ 
+  comments Comment[]
+ 
+  createdAt DateTime @default(now())
+}
+model ProjectMember {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  projectId String
+ 
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+ 
+  userId String
+ 
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+ 
+  role String @default("MEMBER")
+  @@unique([projectId,userId])
+}
+model Milestone {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  projectId String
+ 
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+ 
+  title String
+ 
+  dueAt DateTime
+ 
+  status String @default("UPCOMING")
+}
+model Task {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  projectId String
+ 
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+ 
+  assigneeId String?
+ 
+  assignee User? @relation(fields:[assigneeId],references:[id])
+ 
+  title String
+ 
+  description String @default("")
+ 
+  status String @default("TODO")
+ 
+  dueAt DateTime?
+ 
+  order Int @default(0)
+}
+model Event {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  title String
+ 
+  description String @default("")
+ 
+  departmentId String
+ 
+  department Department @relation(fields:[departmentId],references:[id])
+ 
+  location String
+ 
+  startAt DateTime
+ 
+  endAt DateTime
+ 
+  capacity Int @default(100)
+ 
+  bookings Booking[]
+ 
+  registrations EventRegistration[]
+ 
+  createdAt DateTime @default(now())
+}
+model EventRegistration {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  eventId String
+ 
+  event Event @relation(fields:[eventId],references:[id],onDelete:Cascade)
+ 
+  userId String
+ 
+  user User @relation(fields:[userId],references:[id])
+ 
+  registeredAt DateTime @default(now())
+  @@unique([eventId,userId])
+}
+model Comment {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  projectId String
+ 
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+ 
+  authorId String
+ 
+  author User @relation(fields:[authorId],references:[id])
+ 
+  body String
+ 
+  mentions String @default("[]")
+ 
+  createdAt DateTime @default(now())
+}
+model Attachment {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  filename String
+ 
+  url String
+ 
+  mimeType String?
+ 
+  uploadedById String
+ 
+  uploadedBy User @relation(fields:[uploadedById],references:[id])
+ 
+  bookingId String?
+ 
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+}
+model Notification {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  userId String
+ 
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+ 
+  title String
+ 
+  body String
+ 
+  type String
+ 
+  read Boolean @default(false)
+ 
+  link String?
+ 
+  createdAt DateTime @default(now())
+  @@index([userId,read,createdAt])
+}
+model Announcement {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  title String
+ 
+  body String
+ 
+  authorId String
+ 
+  departmentId String?
+ 
+  department Department? @relation("DeptAnnouncements", fields: [departmentId], references: [id])
+ 
+  createdAt DateTime @default(now())
+ 
+  expiresAt DateTime?
+}
+model CollaborationRequest {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  fromDepartmentId String
+ 
+  fromDepartment Department @relation("fromDepartment",fields:[fromDepartmentId],references:[id])
+ 
+  toDepartmentId String
+ 
+  toDepartment Department @relation("toDepartment",fields:[toDepartmentId],references:[id])
+ 
+  requesterId String
+ 
+  title String
+ 
+  details String
+ 
+  status String @default("PENDING")
+ 
+  createdAt DateTime @default(now())
+}
+model MaintenanceLog {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  resourceId String
+ 
+  resource Resource @relation(fields:[resourceId],references:[id],onDelete:Cascade)
+ 
+  title String
+ 
+  details String?
+ 
+  startAt DateTime
+ 
+  endAt DateTime?
+ 
+  createdAt DateTime @default(now())
+}
+model AuditLog {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  userId String
+ 
+  user User @relation(fields:[userId],references:[id])
+ 
+  action String
+ 
+  entity String
+ 
+  entityId String?
+ 
+  metadata String @default("{}")
+ 
+  createdAt DateTime @default(now())
+  @@index([createdAt,entity])
+}
+model Setting {
+ 
+ 
+  id String @id @default(cuid())
+ 
+  key String @unique
+ 
+  value String
+ 
+  updatedAt DateTime @updatedAt
+}

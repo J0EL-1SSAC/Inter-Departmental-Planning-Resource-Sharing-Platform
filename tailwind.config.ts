@@ -1,0 +1,1 @@
+import type {Config} from 'tailwindcss'; export default {content:['./client/index.html','./client/src/**/*.{ts,tsx}'],theme:{extend:{colors:{accent:'#4F46E5',canvas:'#F8F9FB',ink:'#25263A'},fontFamily:{sans:['DM Sans','sans-serif'],display:['Manrope','sans-serif']},borderRadius:{card:'10px'}}},plugins:[]} satisfies Config;

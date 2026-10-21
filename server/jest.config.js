@@ -1,0 +1,1 @@
+export default {testEnvironment:'node',transform:{'^.+\\.tsx?$':['ts-jest',{useESM:true,tsconfig:{module:'ESNext',moduleResolution:'Bundler',esModuleInterop:true}}]},extensionsToTreatAsEsm:['.ts'],moduleNameMapper:{'^(\\.{1,2}/.*)\\.js$':'$1'},testMatch:['**/*.test.ts']};
